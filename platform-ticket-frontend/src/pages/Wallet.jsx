@@ -4,6 +4,7 @@ import { loadRazorpayScript, mockRazorpayPayment } from "../utils/loadRazorpay";
 import MockPaymentModal from "../components/MockPaymentModal";
 import { WalletChipIcon } from "../components/icons";
 import { useAuth } from "../context/AuthContext";
+import BackButton from "../components/BackButton";
 
 const isDev = import.meta.env.VITE_ENVIRONMENT === "development";
 const PRESET_AMOUNTS = [100, 200, 500, 1000];
@@ -98,6 +99,7 @@ export default function Wallet() {
 
   return (
     <div>
+      <BackButton fallback="/" />
       <h2>My Wallet</h2>
       {error && <p className="error">{error}</p>}
 

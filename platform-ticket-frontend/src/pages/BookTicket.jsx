@@ -5,6 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import { loadRazorpayScript, mockRazorpayPayment } from "../utils/loadRazorpay";
 import MockPaymentModal from "../components/MockPaymentModal";
 import { DropOffIcon, PickUpIcon, ViewWaitIcon } from "../components/icons";
+import BackButton from "../components/BackButton";
 
 const DURATIONS = [
   { hours: 1, price: 50 },
@@ -288,6 +289,7 @@ export default function BookTicket() {
 
   return (
     <div className="event-detail">
+      <BackButton fallback="/" />
       <h2>{station.name}</h2>
       <p className="event-meta">Station code: {station.code}</p>
 

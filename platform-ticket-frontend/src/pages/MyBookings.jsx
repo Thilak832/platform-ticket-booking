@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import apiClient from "../api/client";
 import { EmptyTicketsIllustration } from "../components/icons";
+import BackButton from "../components/BackButton";
 
 const PURPOSE_LABELS = {
   drop_off: "Drop-off",
@@ -46,6 +47,7 @@ export default function MyBookings() {
   if (bookings.length === 0) {
     return (
       <div className="empty-state">
+        <BackButton fallback="/" style={{ alignSelf: "flex-start" }} />
         <EmptyTicketsIllustration />
         <h3>No tickets yet</h3>
         <p className="event-meta">Book a platform ticket and it'll show up here with a QR code.</p>
@@ -55,6 +57,7 @@ export default function MyBookings() {
 
   return (
     <div>
+      <BackButton fallback="/" />
       <h2>My Tickets</h2>
       <div className="ticket-stub-list">
         {bookings.map((b) => (

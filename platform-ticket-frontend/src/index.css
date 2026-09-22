@@ -669,6 +669,13 @@ a {
   padding: 2rem;
 }
 
+.auth-split-form-inner {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 420px;
+}
+
 .auth-split-form .auth-form {
   margin: 0;
   box-shadow: none;

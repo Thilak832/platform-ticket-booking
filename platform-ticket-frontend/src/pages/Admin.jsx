@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import apiClient from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import { StatIcon } from "../components/icons";
+import BackButton from "../components/BackButton";
 
 const STAT_TILES = [
   { key: "bookings_today", label: "Bookings today", kind: "bookings", prefix: "" },
@@ -59,6 +60,7 @@ export default function Admin() {
 
   return (
     <div>
+      <BackButton fallback="/" />
       <h2>Admin Dashboard</h2>
       <p className="event-meta" style={{ marginBottom: "1.5rem" }}>Real-time bookings, revenue, and system activity.</p>
 
