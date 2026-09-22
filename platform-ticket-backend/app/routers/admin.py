@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import date as date_type, datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends
 from sqlalchemy import func
@@ -54,6 +54,8 @@ def list_all_bookings(
 @router.get("/activity-logs", response_model=list[ActivityLogOut])
 def list_activity_logs(
     action: str | None = None,
+    date: date_type | None = None,
+    all_time: bool = False,
     skip: int = 0,
     limit: int = 100,
     db: Session = Depends(get_db),
@@ -61,4 +63,11 @@ def list_activity_logs(
     query = db.query(ActivityLog)
     if action:
         query = query.filter(ActivityLog.action == action)
+
+    if not all_time:
+        target_day = date or datetime.now(timezone.utc).date()
+        day_start = datetime.combine(target_day, datetime.min.time(), tzinfo=timezone.utc)
+        day_end = day_start + timedelta(days=1)
+        query = query.filter(ActivityLog.created_at >= day_start, ActivityLog.created_at < day_end)
+
     return query.order_by(ActivityLog.created_at.desc()).offset(skip).limit(limit).all()

@@ -10,21 +10,39 @@ const STAT_TILES = [
   { key: "total_bookings", label: "Total bookings", kind: "total", prefix: "" },
 ];
 
+function todayIso() {
+  const now = new Date();
+  const tzOffsetMs = now.getTimezoneOffset() * 60000;
+  return new Date(now - tzOffsetMs).toISOString().slice(0, 10);
+}
+
 export default function Admin() {
   const { user } = useAuth();
   const [stats, setStats] = useState(null);
   const [logs, setLogs] = useState([]);
   const [error, setError] = useState("");
+  const [logsLoading, setLogsLoading] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(todayIso());
+  const [allTime, setAllTime] = useState(false);
 
   useEffect(() => {
     if (user?.role !== "admin") return;
-    Promise.all([apiClient.get("/api/admin/stats"), apiClient.get("/api/admin/activity-logs?limit=50")])
-      .then(([statsRes, logsRes]) => {
-        setStats(statsRes.data);
-        setLogs(logsRes.data);
-      })
-      .catch(() => setError("Failed to load admin data"));
+    apiClient
+      .get("/api/admin/stats")
+      .then(({ data }) => setStats(data))
+      .catch(() => setError("Failed to load admin stats"));
   }, [user]);
+
+  useEffect(() => {
+    if (user?.role !== "admin") return;
+    setLogsLoading(true);
+    const params = allTime ? { all_time: true, limit: 50 } : { date: selectedDate, limit: 50 };
+    apiClient
+      .get("/api/admin/activity-logs", { params })
+      .then(({ data }) => setLogs(data))
+      .catch(() => setError("Failed to load activity logs"))
+      .finally(() => setLogsLoading(false));
+  }, [user, selectedDate, allTime]);
 
   if (user?.role !== "admin") return <p className="error">Admin access required</p>;
   if (error) return <p className="error">{error}</p>;
@@ -45,9 +63,40 @@ export default function Admin() {
         ))}
       </div>
 
-      <h3 className="section-title">Recent Activity</h3>
-      <div className="activity-feed">
-        {logs.map((log) => (
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.75rem", marginTop: "2.5rem" }}>
+        <h3 className="section-title" style={{ margin: 0 }}>
+          Recent Activity {!allTime && <span className="event-meta">&middot; {selectedDate}</span>}
+        </h3>
+
+        <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+          <input
+            type="date"
+            value={selectedDate}
+            disabled={allTime}
+            max={todayIso()}
+            onChange={(e) => setSelectedDate(e.target.value)}
+            style={{ padding: "0.4rem 0.6rem", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", fontSize: "0.85rem" }}
+          />
+          <button
+            type="button"
+            className={`btn btn-sm ${selectedDate === todayIso() && !allTime ? "" : "btn-secondary"}`}
+            onClick={() => { setAllTime(false); setSelectedDate(todayIso()); }}
+          >
+            Today
+          </button>
+          <button
+            type="button"
+            className={`btn btn-sm ${allTime ? "" : "btn-secondary"}`}
+            onClick={() => setAllTime(true)}
+          >
+            All time
+          </button>
+        </div>
+      </div>
+
+      <div className="activity-feed" style={{ marginTop: "1rem" }}>
+        {logsLoading && <p className="event-meta">Loading activity...</p>}
+        {!logsLoading && logs.map((log) => (
           <div key={log.id} className="activity-row">
             <span className={`activity-dot ${log.status === "failed" ? "activity-dot-failed" : ""}`} />
             <div className="activity-row-body">
@@ -62,7 +111,11 @@ export default function Admin() {
             </div>
           </div>
         ))}
-        {logs.length === 0 && <p className="event-meta">No activity yet.</p>}
+        {!logsLoading && logs.length === 0 && (
+          <p className="event-meta">
+            No activity {allTime ? "recorded yet" : `on ${selectedDate}`}.
+          </p>
+        )}
       </div>
     </div>
   );
