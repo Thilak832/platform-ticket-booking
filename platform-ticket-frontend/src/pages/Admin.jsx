@@ -24,6 +24,8 @@ export default function Admin() {
   const [logsLoading, setLogsLoading] = useState(false);
   const [selectedDate, setSelectedDate] = useState(todayIso());
   const [allTime, setAllTime] = useState(false);
+  const [searchInput, setSearchInput] = useState("");
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     if (user?.role !== "admin") return;
@@ -33,16 +35,23 @@ export default function Admin() {
       .catch(() => setError("Failed to load admin stats"));
   }, [user]);
 
+  // Debounce the search box so we don't hit the API on every keystroke.
+  useEffect(() => {
+    const t = setTimeout(() => setSearch(searchInput.trim()), 350);
+    return () => clearTimeout(t);
+  }, [searchInput]);
+
   useEffect(() => {
     if (user?.role !== "admin") return;
     setLogsLoading(true);
     const params = allTime ? { all_time: true, limit: 50 } : { date: selectedDate, limit: 50 };
+    if (search) params.search = search;
     apiClient
       .get("/api/admin/activity-logs", { params })
       .then(({ data }) => setLogs(data))
       .catch(() => setError("Failed to load activity logs"))
       .finally(() => setLogsLoading(false));
-  }, [user, selectedDate, allTime]);
+  }, [user, selectedDate, allTime, search]);
 
   if (user?.role !== "admin") return <p className="error">Admin access required</p>;
   if (error) return <p className="error">{error}</p>;
@@ -63,19 +72,26 @@ export default function Admin() {
         ))}
       </div>
 
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.75rem", marginTop: "2.5rem" }}>
+      <div className="admin-activity-header">
         <h3 className="section-title" style={{ margin: 0 }}>
           Recent Activity {!allTime && <span className="event-meta">&middot; {selectedDate}</span>}
         </h3>
 
-        <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+        <div className="admin-activity-controls">
+          <input
+            type="text"
+            placeholder="Search by username or email..."
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            className="admin-search-input"
+          />
           <input
             type="date"
             value={selectedDate}
             disabled={allTime}
             max={todayIso()}
             onChange={(e) => setSelectedDate(e.target.value)}
-            style={{ padding: "0.4rem 0.6rem", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", fontSize: "0.85rem" }}
+            className="admin-date-input"
           />
           <button
             type="button"
@@ -94,28 +110,61 @@ export default function Admin() {
         </div>
       </div>
 
-      <div className="activity-feed" style={{ marginTop: "1rem" }}>
-        {logsLoading && <p className="event-meta">Loading activity...</p>}
-        {!logsLoading && logs.map((log) => (
-          <div key={log.id} className="activity-row">
-            <span className={`activity-dot ${log.status === "failed" ? "activity-dot-failed" : ""}`} />
-            <div className="activity-row-body">
-              <p>
-                <strong>{log.action.replace(/_/g, " ")}</strong>{" "}
-                <span className={`status ${log.status === "failed" ? "status-failed" : "status-active"}`}>{log.status}</span>
-              </p>
-              <p className="event-meta">
-                {new Date(log.created_at).toLocaleString()} {log.ip_address ? `· ${log.ip_address}` : ""}
-                {log.details ? ` · ${log.details}` : ""}
-              </p>
-            </div>
-          </div>
-        ))}
-        {!logsLoading && logs.length === 0 && (
-          <p className="event-meta">
-            No activity {allTime ? "recorded yet" : `on ${selectedDate}`}.
-          </p>
-        )}
+      <div className="admin-table-wrap">
+        <table className="admin-table">
+          <thead>
+            <tr>
+              <th>Username</th>
+              <th>Action</th>
+              <th>Date</th>
+              <th>Time</th>
+              <th>Status</th>
+              <th>IP Address</th>
+              <th>Details</th>
+            </tr>
+          </thead>
+          <tbody>
+            {logsLoading && (
+              <tr><td colSpan={7} className="event-meta">Loading activity...</td></tr>
+            )}
+            {!logsLoading && logs.map((log) => {
+              const dt = new Date(log.created_at);
+              const confirmed = log.status !== "failed";
+              return (
+                <tr key={log.id}>
+                  <td>
+                    {log.user_name ? (
+                      <>
+                        <strong>{log.user_name}</strong>
+                        <div className="event-meta">{log.user_email}</div>
+                      </>
+                    ) : (
+                      <span className="event-meta">Unknown user</span>
+                    )}
+                  </td>
+                  <td>{log.action.replace(/_/g, " ")}</td>
+                  <td>{dt.toLocaleDateString()}</td>
+                  <td>{dt.toLocaleTimeString()}</td>
+                  <td>
+                    <span className={`status ${confirmed ? "status-active" : "status-failed"}`}>
+                      {confirmed ? "Confirmed" : "Failed"}
+                    </span>
+                  </td>
+                  <td>{log.ip_address || "-"}</td>
+                  <td>{log.details || "-"}</td>
+                </tr>
+              );
+            })}
+            {!logsLoading && logs.length === 0 && (
+              <tr>
+                <td colSpan={7} className="event-meta">
+                  No activity {allTime ? "recorded yet" : `on ${selectedDate}`}
+                  {search ? ` matching "${search}"` : ""}.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
     </div>
   );

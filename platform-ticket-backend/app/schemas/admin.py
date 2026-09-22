@@ -16,6 +16,8 @@ class ActivityLogOut(BaseModel):
 
     id: uuid.UUID
     user_id: uuid.UUID | None
+    user_name: str | None = None
+    user_email: str | None = None
     action: str
     status: str
     ip_address: str | None

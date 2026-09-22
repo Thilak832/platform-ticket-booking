@@ -56,11 +56,13 @@ def list_activity_logs(
     action: str | None = None,
     date: date_type | None = None,
     all_time: bool = False,
+    search: str | None = None,
     skip: int = 0,
     limit: int = 100,
     db: Session = Depends(get_db),
 ):
-    query = db.query(ActivityLog)
+    query = db.query(ActivityLog, User.full_name, User.email).outerjoin(User, ActivityLog.user_id == User.id)
+
     if action:
         query = query.filter(ActivityLog.action == action)
 
@@ -70,4 +72,23 @@ def list_activity_logs(
         day_end = day_start + timedelta(days=1)
         query = query.filter(ActivityLog.created_at >= day_start, ActivityLog.created_at < day_end)
 
-    return query.order_by(ActivityLog.created_at.desc()).offset(skip).limit(limit).all()
+    if search:
+        pattern = f"%{search.strip()}%"
+        query = query.filter((User.full_name.ilike(pattern)) | (User.email.ilike(pattern)))
+
+    rows = query.order_by(ActivityLog.created_at.desc()).offset(skip).limit(limit).all()
+
+    return [
+        ActivityLogOut(
+            id=log.id,
+            user_id=log.user_id,
+            user_name=full_name,
+            user_email=email,
+            action=log.action,
+            status=log.status,
+            ip_address=log.ip_address,
+            details=log.details,
+            created_at=log.created_at,
+        )
+        for log, full_name, email in rows
+    ]
