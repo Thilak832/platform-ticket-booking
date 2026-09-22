@@ -95,10 +95,12 @@ export default function BookTicket() {
     );
   };
 
-  const handleSimulateAtStation = () => {
+  const handleSimulateAwayFromStation = () => {
     setError("");
     setLocationStatus("checking");
-    checkLocation(station.latitude, station.longitude);
+    // Offset by ~0.005 degrees latitude (~550m) so the simulated position is
+    // comfortably outside the required distance, without needing real GPS.
+    checkLocation(station.latitude + 0.005, station.longitude);
   };
 
   const handleContinueToPayment = () => {
@@ -336,8 +338,8 @@ export default function BookTicket() {
             Verify Location
           </button>
           {isDev && (
-            <button type="button" className="btn btn-secondary" onClick={handleSimulateAtStation}>
-              Simulate: I'm at the station (dev)
+            <button type="button" className="btn btn-secondary" onClick={handleSimulateAwayFromStation}>
+              Simulate: I'm away from the station (dev)
             </button>
           )}
         </div>
@@ -347,7 +349,7 @@ export default function BookTicket() {
           <p className={locationStatus.verified ? "status status-active" : "error"}>
             {locationStatus.verified
               ? `Location verified (${locationStatus.distance_meters}m away)`
-              : `Too far: ${locationStatus.distance_meters}m away. Must be within ${locationStatus.required_meters}m.`}
+              : `Too close: only ${locationStatus.distance_meters}m away. Move at least ${locationStatus.required_meters}m away to book.`}
           </p>
         )}
 

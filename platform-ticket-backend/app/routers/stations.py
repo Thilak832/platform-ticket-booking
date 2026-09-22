@@ -34,4 +34,4 @@ def verify_location(payload: LocationVerifyRequest, db: Session = Depends(get_db
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Station not found")
 
     dist = distance_meters(payload.latitude, payload.longitude, float(station.latitude), float(station.longitude))
-    return LocationVerifyResponse(verified=dist <= REQUIRED_METERS, distance_meters=round(dist, 1), required_meters=REQUIRED_METERS)
+    return LocationVerifyResponse(verified=dist > REQUIRED_METERS, distance_meters=round(dist, 1), required_meters=REQUIRED_METERS)

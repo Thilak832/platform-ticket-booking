@@ -62,13 +62,13 @@ def create_booking(payload: BookingCreate, request: Request, current_user: User 
 
     ip = get_client_ip(request)
     dist = distance_meters(payload.latitude, payload.longitude, float(station.latitude), float(station.longitude))
-    location_verified = dist <= REQUIRED_METERS
+    location_verified = dist > REQUIRED_METERS
 
     if not location_verified:
         log_activity(db, "LOCATION_VERIFY", user_id=current_user.id, status="failed", ip_address=ip, details=f"distance={dist:.0f}m")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"You are {dist:.0f}m away from the station. Required: within {REQUIRED_METERS:.0f}m",
+            detail=f"You are too close to the station ({dist:.0f}m away). Move at least {REQUIRED_METERS:.0f}m away to book.",
         )
 
     log_activity(db, "LOCATION_VERIFY", user_id=current_user.id, ip_address=ip, details=f"distance={dist:.0f}m")
