@@ -1,5 +1,4 @@
 import { LogoMark } from "./icons";
-import BackButton from "./BackButton";
 
 export default function AuthLayout({ children }) {
   return (
@@ -32,7 +31,6 @@ export default function AuthLayout({ children }) {
 
       <div className="auth-split-form">
         <div className="auth-split-form-inner">
-          <BackButton fallback="/" />
           {children}
         </div>
       </div>

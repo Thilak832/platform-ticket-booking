@@ -1,13 +1,24 @@
-import { createContext, useContext, useState, useCallback } from "react";
+import { createContext, useContext, useState, useCallback, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import apiClient from "../api/client";
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
+  const navigate = useNavigate();
   const [user, setUser] = useState(() => {
     const stored = localStorage.getItem("user");
     return stored ? JSON.parse(stored) : null;
   });
+
+  useEffect(() => {
+    const handleSessionExpired = () => {
+      setUser(null);
+      navigate("/login");
+    };
+    window.addEventListener("auth:session-expired", handleSessionExpired);
+    return () => window.removeEventListener("auth:session-expired", handleSessionExpired);
+  }, [navigate]);
 
   const signup = useCallback(async (payload) => {
     const { data } = await apiClient.post("/api/auth/signup", payload);

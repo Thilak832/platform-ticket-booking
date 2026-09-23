@@ -16,8 +16,12 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
+      const hadSession = !!localStorage.getItem("access_token");
       localStorage.removeItem("access_token");
       localStorage.removeItem("user");
+      if (hadSession) {
+        window.dispatchEvent(new Event("auth:session-expired"));
+      }
     }
     return Promise.reject(error);
   }

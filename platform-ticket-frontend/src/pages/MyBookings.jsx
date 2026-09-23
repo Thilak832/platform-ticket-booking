@@ -57,7 +57,6 @@ export default function MyBookings() {
 
   return (
     <div>
-      <BackButton fallback="/" />
       <h2>My Tickets</h2>
       <div className="ticket-stub-list">
         {bookings.map((b) => (
