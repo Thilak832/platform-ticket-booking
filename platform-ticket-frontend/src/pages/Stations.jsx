@@ -21,7 +21,7 @@ export default function Stations() {
       <section className="hero">
         <div className="hero-copy">
           <span className="hero-eyebrow">Chennai Suburban Railway</span>
-          <h1 className="hero-title">Skip the counter queue.<br />Book your platform ticket.</h1>
+          <h1 className="hero-title">Skip the counter queue.<br />Book your platform ticket</h1>
           <p className="hero-subtitle">
             A short-duration entry pass for drop-off, pick-up, or waiting — bought online in
             under a minute, verified with GPS, and scanned as a QR code at the gate.
