@@ -227,6 +227,18 @@ def cancel_booking(booking_id: uuid.UUID, request: Request, current_user: User =
     return CancelResponse(booking=booking, refund_amount=refund_amount)
 
 
+def scan_decision(booking: Booking) -> tuple[bool, str]:
+    """Pure decision logic for a ticket scan: given a booking's current state,
+    decide whether the scan should succeed, and the message to show gate staff.
+    Kept separate from scan_ticket() so it's unit-testable without a DB/request."""
+    if booking.status == BookingStatus.USED:
+        used_at = booking.used_at.strftime("%I:%M %p on %d %b %Y") if booking.used_at else "an earlier time"
+        return False, f"Ticket already used at {used_at}"
+    if booking.status != BookingStatus.ACTIVE:
+        return False, f"Ticket is {booking.status.value} and cannot be scanned"
+    return True, "Ticket scanned successfully - entry granted"
+
+
 @router.post("/{booking_id}/scan", response_model=TicketScanResult)
 def scan_ticket(booking_id: uuid.UUID, request: Request, _admin: User = Depends(require_admin), db: Session = Depends(get_db)):
     booking = db.get(Booking, booking_id)
@@ -243,20 +255,11 @@ def scan_ticket(booking_id: uuid.UUID, request: Request, _admin: User = Depends(
         passenger_email=booking.user.email,
     )
 
-    if booking.status == BookingStatus.USED:
-        log_activity(db, "TICKET_SCAN", user_id=booking.user_id, status="failed", ip_address=ip, details="already used")
-        used_at = booking.used_at.strftime("%I:%M %p on %d %b %Y") if booking.used_at else "an earlier time"
-        return TicketScanResult(
-            valid=False, message=f"Ticket already used at {used_at}",
-            booking=BookingOut.model_validate(booking), **details,
-        )
+    valid, message = scan_decision(booking)
 
-    if booking.status != BookingStatus.ACTIVE:
+    if not valid:
         log_activity(db, "TICKET_SCAN", user_id=booking.user_id, status="failed", ip_address=ip, details=booking.status.value)
-        return TicketScanResult(
-            valid=False, message=f"Ticket is {booking.status.value} and cannot be scanned",
-            booking=BookingOut.model_validate(booking), **details,
-        )
+        return TicketScanResult(valid=False, message=message, booking=BookingOut.model_validate(booking), **details)
 
     booking.status = BookingStatus.USED
     booking.used_at = datetime.now(timezone.utc)
@@ -265,7 +268,4 @@ def scan_ticket(booking_id: uuid.UUID, request: Request, _admin: User = Depends(
 
     log_activity(db, "TICKET_SCAN", user_id=booking.user_id, ip_address=ip, details=str(booking.station_id))
 
-    return TicketScanResult(
-        valid=True, message="Ticket scanned successfully - entry granted",
-        booking=BookingOut.model_validate(booking), **details,
-    )
+    return TicketScanResult(valid=True, message=message, booking=BookingOut.model_validate(booking), **details)
