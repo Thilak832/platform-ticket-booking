@@ -1004,6 +1004,71 @@ a {
   margin-bottom: 0.1rem;
 }
 
+.scan-result-card {
+  max-width: 480px;
+  border-radius: var(--radius-md);
+  padding: 1.5rem;
+  margin-top: 1.25rem;
+  border: 1px solid;
+}
+
+.scan-result-valid {
+  background: var(--success-bg);
+  border-color: var(--success-border);
+}
+
+.scan-result-invalid {
+  background: var(--danger-bg);
+  border-color: var(--danger-border);
+}
+
+.scan-result-status {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+}
+
+.scan-result-icon {
+  flex-shrink: 0;
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.scan-result-valid .scan-result-icon {
+  background: var(--success);
+}
+
+.scan-result-invalid .scan-result-icon {
+  background: var(--danger);
+}
+
+.scan-result-status strong {
+  display: block;
+  font-size: 1.05rem;
+}
+
+.scan-result-status p {
+  margin: 0.15rem 0 0;
+  font-size: 0.9rem;
+  color: var(--text-secondary, #475569);
+}
+
+.scan-result-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.9rem;
+  margin-top: 1.1rem;
+  padding-top: 1.1rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
 .ticket-code {
   font-family: "SFMono-Regular", Consolas, monospace;
   font-size: 0.75rem;

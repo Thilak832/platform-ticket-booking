@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import apiClient from "../api/client";
 import { useAuth } from "../context/AuthContext";
+import { Link } from "react-router-dom";
 import { StatIcon } from "../components/icons";
 
 const STAT_TILES = [
@@ -59,10 +60,15 @@ export default function Admin() {
 
   return (
     <div>
-      <h2>Admin Dashboard</h2>
-      <p className="event-meta" style={{ marginBottom: "1.5rem" }}>Real-time bookings, revenue, and system activity.</p>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "0.75rem" }}>
+        <div>
+          <h2>Admin Dashboard</h2>
+          <p className="event-meta">Real-time bookings, revenue, and system activity.</p>
+        </div>
+        <Link to="/admin/scan" className="btn">📷 Scan Ticket</Link>
+      </div>
 
-      <div className="event-grid">
+      <div className="event-grid" style={{ marginTop: "1.5rem" }}>
         {STAT_TILES.map(({ key, label, kind, prefix }) => (
           <div key={key} className="event-card stat-tile stat-tile-v2">
             <span className="stat-tile-icon"><StatIcon kind={kind} /></span>

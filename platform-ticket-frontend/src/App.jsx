@@ -8,6 +8,7 @@ import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
 import MyBookings from "./pages/MyBookings";
 import Admin from "./pages/Admin";
+import ScanTicket from "./pages/ScanTicket";
 import Wallet from "./pages/Wallet";
 
 export default function App() {
@@ -49,6 +50,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <Admin />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/scan"
+            element={
+              <ProtectedRoute>
+                <ScanTicket />
               </ProtectedRoute>
             }
           />

@@ -77,3 +77,13 @@ class PaymentVerify(BaseModel):
 class CancelResponse(BaseModel):
     booking: BookingOut
     refund_amount: Decimal
+
+
+class TicketScanResult(BaseModel):
+    valid: bool
+    message: str
+    booking: BookingOut | None = None
+    station_name: str | None = None
+    station_code: str | None = None
+    passenger_name: str | None = None
+    passenger_email: str | None = None

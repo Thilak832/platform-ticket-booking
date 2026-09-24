@@ -22,6 +22,7 @@ from app.schemas.booking import (
     CancelResponse,
     PaymentVerify,
     RazorpayOrderOut,
+    TicketScanResult,
 )
 from app.services.activity_service import log_activity
 from app.services.email_service import send_booking_confirmation, send_cancellation_confirmation
@@ -226,22 +227,45 @@ def cancel_booking(booking_id: uuid.UUID, request: Request, current_user: User =
     return CancelResponse(booking=booking, refund_amount=refund_amount)
 
 
-@router.post("/{booking_id}/scan", response_model=BookingOut)
-def scan_ticket(booking_id: uuid.UUID, _admin: User = Depends(require_admin), db: Session = Depends(get_db)):
+@router.post("/{booking_id}/scan", response_model=TicketScanResult)
+def scan_ticket(booking_id: uuid.UUID, request: Request, _admin: User = Depends(require_admin), db: Session = Depends(get_db)):
     booking = db.get(Booking, booking_id)
     if not booking:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Booking not found")
+        return TicketScanResult(valid=False, message="Ticket not found or invalid QR code")
 
     booking = _refresh_expiry(booking, db)
+    ip = get_client_ip(request)
+
+    details = dict(
+        station_name=booking.station.name,
+        station_code=booking.station.code,
+        passenger_name=booking.user.full_name,
+        passenger_email=booking.user.email,
+    )
+
+    if booking.status == BookingStatus.USED:
+        log_activity(db, "TICKET_SCAN", user_id=booking.user_id, status="failed", ip_address=ip, details="already used")
+        used_at = booking.used_at.strftime("%I:%M %p on %d %b %Y") if booking.used_at else "an earlier time"
+        return TicketScanResult(
+            valid=False, message=f"Ticket already used at {used_at}",
+            booking=BookingOut.model_validate(booking), **details,
+        )
 
     if booking.status != BookingStatus.ACTIVE:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Ticket is {booking.status.value}, cannot be scanned")
+        log_activity(db, "TICKET_SCAN", user_id=booking.user_id, status="failed", ip_address=ip, details=booking.status.value)
+        return TicketScanResult(
+            valid=False, message=f"Ticket is {booking.status.value} and cannot be scanned",
+            booking=BookingOut.model_validate(booking), **details,
+        )
 
     booking.status = BookingStatus.USED
     booking.used_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(booking)
 
-    log_activity(db, "TICKET_USED", user_id=booking.user_id, details=str(booking.station_id))
+    log_activity(db, "TICKET_SCAN", user_id=booking.user_id, ip_address=ip, details=str(booking.station_id))
 
-    return booking
+    return TicketScanResult(
+        valid=True, message="Ticket scanned successfully - entry granted",
+        booking=BookingOut.model_validate(booking), **details,
+    )
