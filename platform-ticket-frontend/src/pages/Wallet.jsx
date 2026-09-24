@@ -101,6 +101,7 @@ export default function Wallet() {
       <h2>My Wallet</h2>
       {error && <p className="error">{error}</p>}
 
+      <div className="wallet-layout">
       <div className="wallet-card">
         <div className="wallet-card-top">
           <WalletChipIcon />
@@ -119,7 +120,7 @@ export default function Wallet() {
         </div>
       </div>
 
-      <div className="event-detail" style={{ marginTop: "1.5rem", maxWidth: 480 }}>
+      <div className="event-detail wallet-topup">
         <h3>Add Money</h3>
         <div className="preset-amounts">
           {PRESET_AMOUNTS.map((a) => (
@@ -147,6 +148,7 @@ export default function Wallet() {
           {busy ? "Processing..." : `Add ₹${amount}`}
         </button>
         {isDev && <p className="event-meta" style={{ marginTop: "0.5rem" }}>Dev mode: payment is simulated, no real Razorpay charge.</p>}
+      </div>
       </div>
 
       {pendingOrder && (

@@ -1379,6 +1379,30 @@ a {
   margin: 0.15rem 0 0;
 }
 
+/* Wallet card and "Add Money" panel side by side, top-aligned; stacked on narrow screens */
+.wallet-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 420px) minmax(0, 480px);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.wallet-layout .wallet-card {
+  max-width: none;
+}
+
+/* .event-detail centres itself with margin: auto - not wanted inside the grid */
+.wallet-topup {
+  margin: 0;
+  max-width: none;
+}
+
+@media (max-width: 960px) {
+  .wallet-layout {
+    grid-template-columns: minmax(0, 480px);
+  }
+}
+
 .preset-amounts {
   display: flex;
   gap: 0.5rem;
